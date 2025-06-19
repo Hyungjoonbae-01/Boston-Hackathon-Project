@@ -62,19 +62,19 @@ export default function PatientFormPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-800 dark:bg-slate-800 text-white">
+    <div className="min-h-screen bg-white text-gray-900">
       <div className="p-5 pt-16">
         <div className="flex items-center justify-between mb-6">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+            <Button variant="ghost" size="icon" className="text-gray-900 hover:bg-gray-100">
               <ArrowLeft className="h-6 w-6" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">Patient Detail</h1>
+          <h1 className="text-xl font-bold text-gray-900">Patient Detail</h1>
           <div></div>
         </div>
 
-        <div className="bg-slate-700 p-5 rounded-2xl mb-20">
+        <div className="bg-gray-50 p-5 rounded-2xl mb-20 border border-gray-200">
           <div className="space-y-5">
             <div>
               <Input
@@ -82,7 +82,7 @@ export default function PatientFormPage() {
                 value={formData.patientName}
                 onChange={(e) => setFormData({ ...formData, patientName: e.target.value })}
                 disabled={formData.notApplicable}
-                className="bg-slate-800 border-none text-white placeholder:text-gray-400"
+                className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
               />
             </div>
 
@@ -98,7 +98,7 @@ export default function PatientFormPage() {
                   })
                 }
               />
-              <label htmlFor="notApplicable" className="text-white cursor-pointer">
+              <label htmlFor="notApplicable" className="text-gray-900 cursor-pointer">
                 Not applicable
               </label>
             </div>
@@ -109,7 +109,7 @@ export default function PatientFormPage() {
                 onValueChange={(value) => setFormData({ ...formData, ageRange: value })}
               >
                 <SelectTrigger
-                  className={`bg-slate-800 border-none text-white ${errors.includes("Age range is required") ? "border-red-500 border-2" : ""}`}
+                  className={`bg-white border-gray-300 text-gray-900 ${errors.includes("Age range is required") ? "border-red-500 border-2" : ""}`}
                 >
                   <SelectValue placeholder="Age range *" />
                 </SelectTrigger>
@@ -126,7 +126,7 @@ export default function PatientFormPage() {
             <div>
               <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
                 <SelectTrigger
-                  className={`bg-slate-800 border-none text-white ${errors.includes("Gender is required") ? "border-red-500 border-2" : ""}`}
+                  className={`bg-white border-gray-300 text-gray-900 ${errors.includes("Gender is required") ? "border-red-500 border-2" : ""}`}
                 >
                   <SelectValue placeholder="Gender *" />
                 </SelectTrigger>
@@ -143,7 +143,7 @@ export default function PatientFormPage() {
               placeholder="Heart Rate (bpm) *"
               value={formData.heartRate}
               onChange={(e) => setFormData({ ...formData, heartRate: e.target.value })}
-              className={`bg-slate-800 border-none text-white placeholder:text-gray-400 ${errors.includes("Heart rate is required") ? "border-red-500 border-2" : ""}`}
+              className={`bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 ${errors.includes("Heart rate is required") ? "border-red-500 border-2" : ""}`}
             />
 
             <Input
@@ -151,7 +151,7 @@ export default function PatientFormPage() {
               placeholder="Blood Pressure (e.g., 120/80) *"
               value={formData.bloodPressure}
               onChange={(e) => setFormData({ ...formData, bloodPressure: e.target.value })}
-              className={`bg-slate-800 border-none text-white placeholder:text-gray-400 ${errors.includes("Blood pressure is required") ? "border-red-500 border-2" : ""}`}
+              className={`bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 ${errors.includes("Blood pressure is required") ? "border-red-500 border-2" : ""}`}
             />
 
             <Input
@@ -159,7 +159,7 @@ export default function PatientFormPage() {
               placeholder="Oxygen Saturation (%) *"
               value={formData.oxygenSaturation}
               onChange={(e) => setFormData({ ...formData, oxygenSaturation: e.target.value })}
-              className={`bg-slate-800 border-none text-white placeholder:text-gray-400 ${errors.includes("Oxygen saturation is required") ? "border-red-500 border-2" : ""}`}
+              className={`bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 ${errors.includes("Oxygen saturation is required") ? "border-red-500 border-2" : ""}`}
               min="0"
               max="100"
             />
@@ -168,15 +168,15 @@ export default function PatientFormPage() {
               placeholder="Patient Symptoms *"
               value={formData.symptoms}
               onChange={(e) => setFormData({ ...formData, symptoms: e.target.value })}
-              className={`bg-slate-800 border-none text-white placeholder:text-gray-400 min-h-[100px] ${errors.includes("Patient symptoms are required") ? "border-red-500 border-2" : ""}`}
+              className={`bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 min-h-[100px] ${errors.includes("Patient symptoms are required") ? "border-red-500 border-2" : ""}`}
             />
           </div>
 
           {/* Show validation errors */}
           {errors.length > 0 && (
-            <div className="mt-4 p-3 bg-red-900/20 border border-red-500 rounded-lg">
-              <p className="text-red-400 text-sm font-medium mb-2">Please fix the following errors:</p>
-              <ul className="text-red-300 text-sm space-y-1">
+            <div className="mt-4 p-3 bg-red-50 border border-red-300 rounded-lg">
+              <p className="text-red-700 text-sm font-medium mb-2">Please fix the following errors:</p>
+              <ul className="text-red-600 text-sm space-y-1">
                 {errors.map((error, index) => (
                   <li key={index}>• {error}</li>
                 ))}
@@ -185,18 +185,18 @@ export default function PatientFormPage() {
           )}
 
           {/* Debug info */}
-          <div className="mt-4 p-3 bg-slate-600 rounded-lg text-xs">
-            <p className="text-gray-300 mb-2">Form Status:</p>
-            <p className="text-gray-400">Age: {formData.ageRange || "Not selected"}</p>
-            <p className="text-gray-400">Gender: {formData.gender || "Not selected"}</p>
-            <p className="text-gray-400">Heart Rate: {formData.heartRate || "Empty"}</p>
-            <p className="text-gray-400">Blood Pressure: {formData.bloodPressure || "Empty"}</p>
-            <p className="text-gray-400">Oxygen Sat: {formData.oxygenSaturation || "Empty"}</p>
-            <p className="text-gray-400">Symptoms: {formData.symptoms ? "Filled" : "Empty"}</p>
+          <div className="mt-4 p-3 bg-gray-100 rounded-lg text-xs border border-gray-200">
+            <p className="text-gray-700 mb-2">Form Status:</p>
+            <p className="text-gray-600">Age: {formData.ageRange || "Not selected"}</p>
+            <p className="text-gray-600">Gender: {formData.gender || "Not selected"}</p>
+            <p className="text-gray-600">Heart Rate: {formData.heartRate || "Empty"}</p>
+            <p className="text-gray-600">Blood Pressure: {formData.bloodPressure || "Empty"}</p>
+            <p className="text-gray-600">Oxygen Sat: {formData.oxygenSaturation || "Empty"}</p>
+            <p className="text-gray-600">Symptoms: {formData.symptoms ? "Filled" : "Empty"}</p>
           </div>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 p-5 bg-slate-800 border-t border-slate-700">
+        <div className="fixed bottom-0 left-0 right-0 p-5 bg-white border-t border-gray-200">
           <Button onClick={handleSubmit} className="w-full py-4 text-lg font-semibold rounded-full">
             Submit
           </Button>
