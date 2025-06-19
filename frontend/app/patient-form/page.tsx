@@ -23,24 +23,42 @@ export default function PatientFormPage() {
     symptoms: "",
   })
 
+  const [errors, setErrors] = useState<string[]>([])
+
   const handleSubmit = () => {
     const { ageRange, gender, heartRate, bloodPressure, oxygenSaturation, symptoms } = formData
+    const newErrors: string[] = []
 
-    if (ageRange && gender && heartRate && bloodPressure && oxygenSaturation && symptoms) {
-      // Store in both localStorage and sessionStorage for compatibility
-      const patientDataToStore = {
-        ...formData,
-        patientName: formData.notApplicable ? "Not applicable" : formData.patientName,
-      }
+    // Validate each required field
+    if (!ageRange) newErrors.push("Age range is required")
+    if (!gender) newErrors.push("Gender is required")
+    if (!heartRate) newErrors.push("Heart rate is required")
+    if (!bloodPressure) newErrors.push("Blood pressure is required")
+    if (!oxygenSaturation) newErrors.push("Oxygen saturation is required")
+    if (!symptoms.trim()) newErrors.push("Patient symptoms are required")
 
-      localStorage.setItem("patientData", JSON.stringify(patientDataToStore))
-      sessionStorage.setItem("patientData", JSON.stringify(patientDataToStore))
-
-      // Navigate to next page
-      router.push("/account-setup")
-    } else {
-      alert("Please fill in all required fields")
+    if (newErrors.length > 0) {
+      setErrors(newErrors)
+      alert("Please fill in all required fields:\n" + newErrors.join("\n"))
+      return
     }
+
+    // Clear errors and proceed
+    setErrors([])
+
+    // Store in both localStorage and sessionStorage for compatibility
+    const patientDataToStore = {
+      ...formData,
+      patientName: formData.notApplicable ? "Not applicable" : formData.patientName,
+    }
+
+    localStorage.setItem("patientData", JSON.stringify(patientDataToStore))
+    sessionStorage.setItem("patientData", JSON.stringify(patientDataToStore))
+
+    console.log("Form data saved:", patientDataToStore) // Debug log
+
+    // Navigate to next page
+    router.push("/account-setup")
   }
 
   return (
@@ -85,62 +103,96 @@ export default function PatientFormPage() {
               </label>
             </div>
 
-            <Select value={formData.ageRange} onValueChange={(value) => setFormData({ ...formData, ageRange: value })}>
-              <SelectTrigger className="bg-slate-800 border-none text-white">
-                <SelectValue placeholder="Age range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0-18">0-18</SelectItem>
-                <SelectItem value="19-35">19-35</SelectItem>
-                <SelectItem value="36-50">36-50</SelectItem>
-                <SelectItem value="51-65">51-65</SelectItem>
-                <SelectItem value="65+">65+</SelectItem>
-              </SelectContent>
-            </Select>
+            <div>
+              <Select
+                value={formData.ageRange}
+                onValueChange={(value) => setFormData({ ...formData, ageRange: value })}
+              >
+                <SelectTrigger
+                  className={`bg-slate-800 border-none text-white ${errors.includes("Age range is required") ? "border-red-500 border-2" : ""}`}
+                >
+                  <SelectValue placeholder="Age range *" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0-18">0-18</SelectItem>
+                  <SelectItem value="19-35">19-35</SelectItem>
+                  <SelectItem value="36-50">36-50</SelectItem>
+                  <SelectItem value="51-65">51-65</SelectItem>
+                  <SelectItem value="65+">65+</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
-              <SelectTrigger className="bg-slate-800 border-none text-white">
-                <SelectValue placeholder="Gender" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="female">Female</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
+            <div>
+              <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
+                <SelectTrigger
+                  className={`bg-slate-800 border-none text-white ${errors.includes("Gender is required") ? "border-red-500 border-2" : ""}`}
+                >
+                  <SelectValue placeholder="Gender *" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             <Input
               type="number"
-              placeholder="Heart Rate (bpm)"
+              placeholder="Heart Rate (bpm) *"
               value={formData.heartRate}
               onChange={(e) => setFormData({ ...formData, heartRate: e.target.value })}
-              className="bg-slate-800 border-none text-white placeholder:text-gray-400"
+              className={`bg-slate-800 border-none text-white placeholder:text-gray-400 ${errors.includes("Heart rate is required") ? "border-red-500 border-2" : ""}`}
             />
 
             <Input
               type="text"
-              placeholder="Blood Pressure (e.g., 120/80)"
+              placeholder="Blood Pressure (e.g., 120/80) *"
               value={formData.bloodPressure}
               onChange={(e) => setFormData({ ...formData, bloodPressure: e.target.value })}
-              className="bg-slate-800 border-none text-white placeholder:text-gray-400"
+              className={`bg-slate-800 border-none text-white placeholder:text-gray-400 ${errors.includes("Blood pressure is required") ? "border-red-500 border-2" : ""}`}
             />
 
             <Input
               type="number"
-              placeholder="Oxygen Saturation (%)"
+              placeholder="Oxygen Saturation (%) *"
               value={formData.oxygenSaturation}
               onChange={(e) => setFormData({ ...formData, oxygenSaturation: e.target.value })}
-              className="bg-slate-800 border-none text-white placeholder:text-gray-400"
+              className={`bg-slate-800 border-none text-white placeholder:text-gray-400 ${errors.includes("Oxygen saturation is required") ? "border-red-500 border-2" : ""}`}
               min="0"
               max="100"
             />
 
             <Textarea
-              placeholder="Patient Symptoms"
+              placeholder="Patient Symptoms *"
               value={formData.symptoms}
               onChange={(e) => setFormData({ ...formData, symptoms: e.target.value })}
-              className="bg-slate-800 border-none text-white placeholder:text-gray-400 min-h-[100px]"
+              className={`bg-slate-800 border-none text-white placeholder:text-gray-400 min-h-[100px] ${errors.includes("Patient symptoms are required") ? "border-red-500 border-2" : ""}`}
             />
+          </div>
+
+          {/* Show validation errors */}
+          {errors.length > 0 && (
+            <div className="mt-4 p-3 bg-red-900/20 border border-red-500 rounded-lg">
+              <p className="text-red-400 text-sm font-medium mb-2">Please fix the following errors:</p>
+              <ul className="text-red-300 text-sm space-y-1">
+                {errors.map((error, index) => (
+                  <li key={index}>• {error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Debug info */}
+          <div className="mt-4 p-3 bg-slate-600 rounded-lg text-xs">
+            <p className="text-gray-300 mb-2">Form Status:</p>
+            <p className="text-gray-400">Age: {formData.ageRange || "Not selected"}</p>
+            <p className="text-gray-400">Gender: {formData.gender || "Not selected"}</p>
+            <p className="text-gray-400">Heart Rate: {formData.heartRate || "Empty"}</p>
+            <p className="text-gray-400">Blood Pressure: {formData.bloodPressure || "Empty"}</p>
+            <p className="text-gray-400">Oxygen Sat: {formData.oxygenSaturation || "Empty"}</p>
+            <p className="text-gray-400">Symptoms: {formData.symptoms ? "Filled" : "Empty"}</p>
           </div>
         </div>
 
