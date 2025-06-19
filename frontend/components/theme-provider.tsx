@@ -1,38 +1,47 @@
-"use client"
+  "use client"
 
-import type React from "react"
+  import type React from "react"
+  import { createContext, useContext, useState, useEffect } from "react"
 
-import { createContext, useContext, useState, useEffect } from "react"
+  interface ThemeContextProps {
+    theme: "light" | "dark"
+    setTheme: (theme: "light" | "dark") => void
+  }
 
-interface ThemeContextProps {
-  theme: "light" | "dark"
-  setTheme: (theme: "light" | "dark") => void
-}
+  const ThemeContext = createContext<ThemeContextProps>({
+    theme: "dark",
+    setTheme: () => {},
+  })
 
-const ThemeContext = createContext<ThemeContextProps>({
-  theme: "light",
-  setTheme: () => {},
-})
+  export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
+    const [theme, setTheme] = useState<"light" | "dark">("dark")
+    const [mounted, setMounted] = useState(false)
 
-export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [theme, setTheme] = useState<"light" | "dark">("light")
+    useEffect(() => {
+      setMounted(true)
+      const storedTheme = localStorage.getItem("theme")
+      if (storedTheme) {
+        setTheme(storedTheme === "dark" ? "dark" : "light")
+      }
+    }, [])
 
-  useEffect(() => {
-    const storedTheme = localStorage.getItem("theme")
-    if (storedTheme) {
-      setTheme(storedTheme === "dark" ? "dark" : "light")
-    } else {
-      // Set default theme based on system preference
-      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-      setTheme(prefersDark ? "dark" : "light")
+    useEffect(() => {
+      if (mounted) {
+        localStorage.setItem("theme", theme)
+        document.documentElement.classList.toggle("dark", theme === "dark")
+      }
+    }, [theme, mounted])
+
+    // Prevent hydration mismatch by not rendering until mounted
+    if (!mounted) {
+      return <div className="dark">{children}</div>
     }
-  }, [])
 
-  useEffect(() => {
-    localStorage.setItem("theme", theme)
-  }, [theme])
+    return (
+      <ThemeContext.Provider value={{ theme, setTheme }}>
+        <div className={theme}>{children}</div>
+      </ThemeContext.Provider>
+    )
+  }
 
-  return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>
-}
-
-export const useTheme = () => useContext(ThemeContext)
+  export const useTheme = () => useContext(ThemeContext)
