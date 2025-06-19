@@ -1,0 +1,25 @@
+{
+  "name": "boston-hackathon",
+  "version": "1.0.0",
+  "description": "Boston Hackathon Project",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && bun run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && bun install",
+    "build": "cd frontend && npm run build",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:backend": "cd backend && bun run start",
+    "start:frontend": "cd frontend && npm run start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "hackathon",
+    "healthcare",
+    "patient-management"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

@@ -25,10 +25,10 @@ export default function PatientFormPage() {
 
   const [errors, setErrors] = useState<string[]>([])
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const { ageRange, gender, heartRate, bloodPressure, oxygenSaturation, symptoms } = formData
     const newErrors: string[] = []
-
+  
     // Validate each required field
     if (!ageRange) newErrors.push("Age range is required")
     if (!gender) newErrors.push("Gender is required")
@@ -36,30 +36,47 @@ export default function PatientFormPage() {
     if (!bloodPressure) newErrors.push("Blood pressure is required")
     if (!oxygenSaturation) newErrors.push("Oxygen saturation is required")
     if (!symptoms.trim()) newErrors.push("Patient symptoms are required")
-
+  
     if (newErrors.length > 0) {
       setErrors(newErrors)
       alert("Please fill in all required fields:\n" + newErrors.join("\n"))
       return
     }
-
+  
     // Clear errors and proceed
     setErrors([])
-
-    // Store in both localStorage and sessionStorage for compatibility
+  
     const patientDataToStore = {
       ...formData,
       patientName: formData.notApplicable ? "Not applicable" : formData.patientName,
     }
-
+  
+    // ✅ Save to local/session storage
     localStorage.setItem("patientData", JSON.stringify(patientDataToStore))
     sessionStorage.setItem("patientData", JSON.stringify(patientDataToStore))
-
-    console.log("Form data saved:", patientDataToStore) // Debug log
-
-    // Navigate to next page
+  
+    console.log("Form data saved:", patientDataToStore)
+  
+    // ✅ Send to backend API (SQLite database)
+    try {
+      const res = await fetch("http://localhost:3000/api/patient", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patientDataToStore),
+      })
+  
+      if (!res.ok) throw new Error("Failed to save to database")
+      console.log("✅ Saved to DB")
+    } catch (error) {
+      console.error("❌ Error saving to database:", error)
+      alert("Something went wrong while saving to the database.")
+      return
+    }
+  
+    // ✅ Navigate to next page
     router.push("/account-setup")
   }
+  
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
