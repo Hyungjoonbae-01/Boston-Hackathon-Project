@@ -3,16 +3,14 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useTheme } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, Moon, Sun } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
 export default function PatientFormPage() {
-  const { theme, setTheme } = useTheme()
   const router = useRouter()
   const [formData, setFormData] = useState({
     patientName: "",
@@ -29,7 +27,16 @@ export default function PatientFormPage() {
     const { ageRange, gender, heartRate, bloodPressure, oxygenSaturation, symptoms } = formData
 
     if (ageRange && gender && heartRate && bloodPressure && oxygenSaturation && symptoms) {
-      localStorage.setItem("patientData", JSON.stringify(formData))
+      // Store in both localStorage and sessionStorage for compatibility
+      const patientDataToStore = {
+        ...formData,
+        patientName: formData.notApplicable ? "Not applicable" : formData.patientName,
+      }
+
+      localStorage.setItem("patientData", JSON.stringify(patientDataToStore))
+      sessionStorage.setItem("patientData", JSON.stringify(patientDataToStore))
+
+      // Navigate to next page
       router.push("/account-setup")
     } else {
       alert("Please fill in all required fields")
@@ -38,18 +45,6 @@ export default function PatientFormPage() {
 
   return (
     <div className="min-h-screen bg-slate-800 dark:bg-slate-800 text-white">
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-10">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="text-white hover:bg-white/20"
-        >
-          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </Button>
-      </div>
-
       <div className="p-5 pt-16">
         <div className="flex items-center justify-between mb-6">
           <Link href="/">
@@ -115,24 +110,29 @@ export default function PatientFormPage() {
             </Select>
 
             <Input
-              placeholder="Heart Rate"
+              type="number"
+              placeholder="Heart Rate (bpm)"
               value={formData.heartRate}
               onChange={(e) => setFormData({ ...formData, heartRate: e.target.value })}
               className="bg-slate-800 border-none text-white placeholder:text-gray-400"
             />
 
             <Input
-              placeholder="Blood Pressure"
+              type="text"
+              placeholder="Blood Pressure (e.g., 120/80)"
               value={formData.bloodPressure}
               onChange={(e) => setFormData({ ...formData, bloodPressure: e.target.value })}
               className="bg-slate-800 border-none text-white placeholder:text-gray-400"
             />
 
             <Input
-              placeholder="Oxygen Saturation"
+              type="number"
+              placeholder="Oxygen Saturation (%)"
               value={formData.oxygenSaturation}
               onChange={(e) => setFormData({ ...formData, oxygenSaturation: e.target.value })}
               className="bg-slate-800 border-none text-white placeholder:text-gray-400"
+              min="0"
+              max="100"
             />
 
             <Textarea

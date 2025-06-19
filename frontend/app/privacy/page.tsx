@@ -1,27 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { useTheme } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Moon, Sun } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
 export default function PrivacyPage() {
-  const { theme, setTheme } = useTheme()
-
   return (
     <div className="min-h-screen bg-white dark:bg-slate-800 text-gray-900 dark:text-white">
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-10">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="dark:text-white dark:hover:bg-white/20"
-        >
-          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </Button>
-      </div>
-
       <div className="p-5 pt-16">
         <div className="flex items-center gap-3 mb-6">
           <Link href="/">

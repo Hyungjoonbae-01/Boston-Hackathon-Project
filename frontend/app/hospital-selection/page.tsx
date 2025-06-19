@@ -3,12 +3,10 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useTheme } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Moon, Sun, ChevronRight } from "lucide-react"
+import { ArrowLeft, ChevronRight } from "lucide-react"
 
 export default function HospitalSelectionPage() {
-  const { theme, setTheme } = useTheme()
   const router = useRouter()
   const [expandedHospital, setExpandedHospital] = useState<number | null>(null)
   const [selectedHospital, setSelectedHospital] = useState<number | null>(null)
@@ -69,18 +67,6 @@ export default function HospitalSelectionPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-800 text-gray-900 dark:text-white">
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-10">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="dark:text-white dark:hover:bg-white/20"
-        >
-          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </Button>
-      </div>
-
       <div className="sticky top-0 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 p-5 pt-16">
         <div className="flex items-center gap-3">
           <Link href="/account-setup">

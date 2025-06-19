@@ -3,12 +3,10 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useTheme } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Moon, Sun, BarChart3, Mail, CreditCard } from "lucide-react"
+import { ArrowLeft, BarChart3, Mail, CreditCard } from "lucide-react"
 
 export default function AccountSetupPage() {
-  const { theme, setTheme } = useTheme()
   const router = useRouter()
   const [selectedOptions, setSelectedOptions] = useState<number[]>([])
 
@@ -32,18 +30,6 @@ export default function AccountSetupPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-800 text-gray-900 dark:text-white">
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-10">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="dark:text-white dark:hover:bg-white/20"
-        >
-          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </Button>
-      </div>
-
       <div className="p-5 pt-16">
         <Link href="/patient-form">
           <Button variant="ghost" size="icon" className="mb-4 dark:text-white dark:hover:bg-white/20">

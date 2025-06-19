@@ -2,12 +2,10 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useTheme } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Moon, Sun, Navigation, Home } from "lucide-react"
+import { ArrowLeft, Navigation, Home } from "lucide-react"
 
 export default function PatientStatusPage() {
-  const { theme, setTheme } = useTheme()
   const [patientData, setPatientData] = useState<any>({})
   const [selectedHospital, setSelectedHospital] = useState("")
   const [currentETA, setCurrentETA] = useState(12)
@@ -52,18 +50,6 @@ export default function PatientStatusPage() {
 
   return (
     <div className="min-h-screen bg-slate-800 dark:bg-slate-800 text-white">
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-16 z-10">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="text-white hover:bg-white/20"
-        >
-          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </Button>
-      </div>
-
       {/* Live Indicator */}
       <div className="absolute top-4 right-4 flex items-center gap-2 text-xs text-green-400">
         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
