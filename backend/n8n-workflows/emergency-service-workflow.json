@@ -1,0 +1,354 @@
+{
+  "name": "Emergency Service Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "emergency-intake",
+        "options": {
+          "noResponseBody": false
+        },
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-node",
+      "name": "Patient Intake Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 300],
+      "webhookId": "patient-intake"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process patient data and create summary\nconst patientData = {\n  id: Date.now().toString(),\n  name: $json.name || 'Unknown Patient',\n  age: $json.age || 'Unknown',\n  gender: $json.gender || 'Unknown',\n  symptoms: $json.symptoms || 'Not specified',\n  phone: $json.phone || 'Not provided',\n  address: $json.address || 'Not provided',\n  severity: $json.severity || 'medium',\n  vitals: $json.vitals || {},\n  timestamp: new Date().toISOString()\n};\n\n// Create emergency summary for TTS\nconst summary = `Emergency alert: ${patientData.age} year old ${patientData.gender} patient ${patientData.name} is experiencing ${patientData.symptoms}. Patient location: ${patientData.address}. Contact number: ${patientData.phone}. This is a ${patientData.severity} priority case.`;\n\nreturn [{\n  json: {\n    ...patientData,\n    summary: summary,\n    shortSummary: `${patientData.age} ${patientData.gender} patient, symptoms: ${patientData.symptoms}`\n  }\n}];"
+      },
+      "id": "process-patient-data",
+      "name": "Process Patient Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Simulate database save\n// In real implementation, this would save to PostgreSQL\nconst caseData = {\n  id: $json.id,\n  name: $json.name,\n  age: $json.age,\n  gender: $json.gender,\n  symptoms: $json.symptoms,\n  phone: $json.phone,\n  address: $json.address,\n  severity: $json.severity,\n  vitals: $json.vitals,\n  timestamp: $json.timestamp,\n  status: 'processing'\n};\n\nconsole.log('Saving to database:', caseData);\n\n// Store in workflow memory for demo\n$workflow.static.emergencyCases = $workflow.static.emergencyCases || {};\n$workflow.static.emergencyCases[$json.id] = caseData;\n\nreturn [{ json: { ...caseData, saved: true } }];"
+      },
+      "id": "save-to-database",
+      "name": "Save to Database",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [500, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Simulate TTS generation\n// In real implementation, this would call ElevenLabs API\nconst audioData = {\n  text: $json.summary,\n  audioUrl: `https://demo-audio.com/emergency-${$json.id}.mp3`,\n  duration: Math.floor($json.summary.length / 10) + 5,\n  generated: true\n};\n\nconsole.log('Generated TTS audio:', audioData);\n\nreturn [{ json: { ...$json, audio: audioData } }];"
+      },
+      "id": "generate-tts",
+      "name": "Generate TTS Audio",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [500, 100]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Find nearby hospitals based on patient location\nconst hospitals = [\n  {\n    name: \"City General Hospital\",\n    phone: \"+1-765-123-4567\",\n    address: \"123 Medical Dr, West Lafayette, IN\",\n    distance: \"2.3 km\",\n    specialties: [\"Emergency\", \"Trauma\", \"Cardiology\"],\n    capacity: \"available\",\n    priority: 1\n  },\n  {\n    name: \"County Medical Center\",\n    phone: \"+1-765-987-6543\",\n    address: \"456 Health Ave, Lafayette, IN\",\n    distance: \"3.1 km\",\n    specialties: [\"Emergency\", \"Pediatrics\", \"Surgery\"],\n    capacity: \"available\",\n    priority: 2\n  },\n  {\n    name: \"Regional Trauma Center\",\n    phone: \"+1-765-555-0123\",\n    address: \"789 Care Blvd, West Lafayette, IN\",\n    distance: \"4.2 km\",\n    specialties: [\"Emergency\", \"Trauma\", \"ICU\"],\n    capacity: \"available\",\n    priority: 3\n  }\n];\n\n// Filter by severity and sort by priority\nlet availableHospitals = hospitals.filter(h => h.capacity === \"available\");\n\n// For high/critical cases, prioritize trauma centers\nif ($json.severity === 'high' || $json.severity === 'critical') {\n  availableHospitals = availableHospitals.sort((a, b) => {\n    const aHasTrauma = a.specialties.includes('Trauma');\n    const bHasTrauma = b.specialties.includes('Trauma');\n    if (aHasTrauma && !bHasTrauma) return -1;\n    if (!aHasTrauma && bHasTrauma) return 1;\n    return a.priority - b.priority;\n  });\n} else {\n  availableHospitals = availableHospitals.sort((a, b) => a.priority - b.priority);\n}\n\nreturn availableHospitals.map(hospital => ({\n  json: {\n    ...hospital,\n    patientId: $json.id,\n    patientSummary: $json.shortSummary,\n    patientSeverity: $json.severity\n  }\n}));"
+      },
+      "id": "find-hospitals",
+      "name": "Find Nearby Hospitals",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [500, 400]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "split-hospitals",
+      "name": "Split Hospital List",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [700, 400]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Simulate hospital call using Twilio\n// In real implementation, this would make actual Twilio API call\nconst callData = {\n  to: $json.phone,\n  from: \"+1-800-EMERGENCY\",\n  hospitalName: $json.name,\n  patientId: $json.patientId,\n  callSid: `CA${Date.now()}${Math.random().toString(36).substr(2, 9)}`,\n  status: 'initiated',\n  timestamp: new Date().toISOString()\n};\n\nconsole.log(`Calling ${$json.name} at ${$json.phone}`);\nconsole.log(`Call SID: ${callData.callSid}`);\n\n// Store call info for tracking\n$workflow.static.hospitalCalls = $workflow.static.hospitalCalls || {};\n$workflow.static.hospitalCalls[callData.callSid] = {\n  ...callData,\n  hospital: $json,\n  patient: {\n    id: $json.patientId,\n    summary: $json.patientSummary,\n    severity: $json.patientSeverity\n  }\n};\n\nreturn [{ json: { ...$json, call: callData } }];"
+      },
+      "id": "make-hospital-call",
+      "name": "Call Hospital (Twilio)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "seconds"
+      },
+      "id": "wait-for-response",
+      "name": "Wait for Hospital Response",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1100, 400]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Simulate hospital response\n// In real implementation, this would check Twilio webhook responses\nconst responses = ['accepted', 'busy', 'no_answer'];\nconst weights = [0.7, 0.2, 0.1]; // 70% accept, 20% busy, 10% no answer\n\n// Weighted random selection\nlet random = Math.random();\nlet hospitalResponse = 'no_answer';\nlet cumulative = 0;\n\nfor (let i = 0; i < responses.length; i++) {\n  cumulative += weights[i];\n  if (random <= cumulative) {\n    hospitalResponse = responses[i];\n    break;\n  }\n}\n\n// For demo purposes, first hospital usually accepts\nif ($json.name === 'City General Hospital') {\n  hospitalResponse = Math.random() > 0.1 ? 'accepted' : 'busy';\n}\n\n// Critical cases get higher acceptance rate\nif ($json.patientSeverity === 'critical') {\n  hospitalResponse = Math.random() > 0.05 ? 'accepted' : hospitalResponse;\n}\n\nconst responseData = {\n  response: hospitalResponse,\n  responseTime: new Date().toISOString(),\n  callDuration: Math.floor(Math.random() * 30) + 10, // 10-40 seconds\n  reason: hospitalResponse === 'busy' ? 'No available beds' : \n          hospitalResponse === 'no_answer' ? 'No response within timeout' : \n          'Hospital confirmed availability'\n};\n\nconsole.log(`${$json.name} response: ${hospitalResponse}`);\n\nreturn [{\n  json: {\n    ...$json,\n    ...responseData\n  }\n}];"
+      },
+      "id": "check-hospital-response",
+      "name": "Check Hospital Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1300, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "hospital-accepted",
+              "leftValue": "={{ $json.response }}",
+              "rightValue": "accepted",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-acceptance",
+      "name": "Hospital Accepted?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1500, 400]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Update case status - Hospital Accepted\nconst updateData = {\n  patientId: $json.patientId,\n  status: 'assigned',\n  assignedHospital: {\n    name: $json.name,\n    phone: $json.phone,\n    address: $json.address,\n    distance: $json.distance,\n    specialties: $json.specialties\n  },\n  responseTime: $json.responseTime,\n  callDuration: $json.callDuration,\n  updatedAt: new Date().toISOString()\n};\n\n// Update in workflow memory\nif ($workflow.static.emergencyCases && $workflow.static.emergencyCases[$json.patientId]) {\n  $workflow.static.emergencyCases[$json.patientId] = {\n    ...$workflow.static.emergencyCases[$json.patientId],\n    ...updateData\n  };\n}\n\nconsole.log(`Case ${$json.patientId} assigned to ${$json.name}`);\n\nreturn [{ json: { ...$json, update: updateData } }];"
+      },
+      "id": "update-case-accepted",
+      "name": "Update Case - Accepted",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1700, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "more-hospitals",
+              "leftValue": "={{ $('Split Hospital List').context.noItemsLeft }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-more-hospitals",
+      "name": "More Hospitals?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1500, 500]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Update case status - No Hospital Available\nconst updateData = {\n  patientId: $json.patientId,\n  status: 'no_hospital_available',\n  reason: 'All contacted hospitals are unavailable',\n  nextAction: 'Expanding search radius or contacting regional hospitals',\n  updatedAt: new Date().toISOString()\n};\n\n// Update in workflow memory\nif ($workflow.static.emergencyCases && $workflow.static.emergencyCases[$json.patientId]) {\n  $workflow.static.emergencyCases[$json.patientId] = {\n    ...$workflow.static.emergencyCases[$json.patientId],\n    ...updateData\n  };\n}\n\nconsole.log(`Case ${$json.patientId} - No hospital available`);\n\nreturn [{ json: { ...$json, update: updateData } }];"
+      },
+      "id": "update-case-failed",
+      "name": "Update Case - No Hospital",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1700, 600]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"patientId\": \"{{ $('Process Patient Data').first().json.id }}\",\n  \"status\": \"{{ $json.status || 'processing' }}\",\n  \"assignedHospital\": {{ $json.assignedHospital ? $json.assignedHospital : 'null' }},\n  \"responseTime\": \"{{ $json.responseTime || null }}\",\n  \"message\": \"{{ $json.status === 'assigned' ? 'Emergency case processed successfully. Hospital has been notified.' : $json.status === 'no_hospital_available' ? 'No hospitals currently available. Expanding search.' : 'Emergency case received and being processed.' }}\"\n}"
+      },
+      "id": "webhook-response",
+      "name": "Send Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1900, 400]
+    }
+  ],
+  "connections": {
+    "Patient Intake Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Patient Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Patient Data": {
+      "main": [
+        [
+          {
+            "node": "Save to Database",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Generate TTS Audio",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Find Nearby Hospitals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Nearby Hospitals": {
+      "main": [
+        [
+          {
+            "node": "Split Hospital List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Hospital List": {
+      "main": [
+        [
+          {
+            "node": "Call Hospital (Twilio)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Hospital (Twilio)": {
+      "main": [
+        [
+          {
+            "node": "Wait for Hospital Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Hospital Response": {
+      "main": [
+        [
+          {
+            "node": "Check Hospital Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Hospital Response": {
+      "main": [
+        [
+          {
+            "node": "Hospital Accepted?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hospital Accepted?": {
+      "main": [
+        [
+          {
+            "node": "Update Case - Accepted",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "More Hospitals?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Case - Accepted": {
+      "main": [
+        [
+          {
+            "node": "Send Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More Hospitals?": {
+      "main": [
+        [
+          {
+            "node": "Call Hospital (Twilio)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Case - No Hospital",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Case - No Hospital": {
+      "main": [
+        [
+          {
+            "node": "Send Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {},
+  "tags": [
+    {
+      "createdAt": "2025-01-19T12:00:00.000Z",
+      "updatedAt": "2025-01-19T12:00:00.000Z",
+      "id": "emergency-workflow",
+      "name": "Emergency Service"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-19T12:00:00.000Z",
+  "versionId": "emergency-v1"
+}

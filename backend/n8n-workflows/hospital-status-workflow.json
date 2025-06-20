@@ -1,0 +1,81 @@
+{
+  "name": "Hospital Status Checker",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "emergency-status/={{ $json.patientId }}",
+        "options": {
+          "noResponseBody": false
+        },
+        "responseMode": "responseNode"
+      },
+      "id": "status-webhook",
+      "name": "Status Check Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 300],
+      "webhookId": "status-check"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Get patient status from workflow memory\nconst patientId = $json.patientId || $parameter.patientId;\n\nif (!patientId) {\n  return [{ json: { error: 'Patient ID required' } }];\n}\n\n// Check if case exists in workflow memory\nconst emergencyCases = $workflow.static.emergencyCases || {};\nconst caseData = emergencyCases[patientId];\n\nif (!caseData) {\n  return [{ json: { error: 'Emergency case not found', patientId } }];\n}\n\n// Return current status\nreturn [{\n  json: {\n    patientId,\n    status: caseData.status || 'processing',\n    assignedHospital: caseData.assignedHospital || null,\n    responseTime: caseData.responseTime || null,\n    message: getStatusMessage(caseData.status, caseData.assignedHospital),\n    lastUpdated: caseData.updatedAt || caseData.timestamp,\n    patientInfo: {\n      name: caseData.name,\n      age: caseData.age,\n      gender: caseData.gender,\n      symptoms: caseData.symptoms,\n      severity: caseData.severity\n    }\n  }\n}];\n\nfunction getStatusMessage(status, assignedHospital) {\n  switch (status) {\n    case 'processing':\n      return 'Contacting nearby hospitals...';\n    case 'assigned':\n      return `Hospital assigned: ${assignedHospital?.name}. Emergency services notified.`;\n    case 'no_hospital_available':\n      return 'No hospitals currently available. Expanding search radius...';\n    default:\n      return 'Processing emergency case...';\n  }\n}"
+      },
+      "id": "get-case-status",
+      "name": "Get Case Status",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "status-response",
+      "name": "Send Status Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [500, 300]
+    }
+  ],
+  "connections": {
+    "Status Check Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Case Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Case Status": {
+      "main": [
+        [
+          {
+            "node": "Send Status Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {},
+  "tags": [
+    {
+      "createdAt": "2025-01-19T12:00:00.000Z",
+      "updatedAt": "2025-01-19T12:00:00.000Z",
+      "id": "status-workflow",
+      "name": "Hospital Status"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-19T12:00:00.000Z",
+  "versionId": "status-v1"
+}
