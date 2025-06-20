@@ -13,6 +13,7 @@
     "start:frontend": "cd frontend && npm run start"
   },
   "devDependencies": {
+    "bun-types": "^1.2.16",
     "concurrently": "^8.2.2"
   },
   "keywords": [
