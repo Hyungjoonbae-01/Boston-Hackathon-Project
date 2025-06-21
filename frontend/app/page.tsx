@@ -1,8 +1,48 @@
 "use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
 export default function HomePage() {
+  const router = useRouter()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    // Check if user is already logged in
+    const verifySession = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/me", { credentials: "include" });
+        if (res.ok) {
+          router.replace("/patient-form")
+        }
+      } catch (error) {
+        console.error("Session verification failed:", error)
+      }
+    };
+    verifySession();
+  }, [router])
+
+  const handleLogin = async () => {
+    setError("")
+    const res = await fetch("http://localhost:3000/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+      credentials: "include",
+    })
+
+    if (res.ok) {
+      router.replace("/patient-form")
+    } else {
+      const data = await res.json()
+      setError(data.message || "Login failed")
+    }
+  }
+
   return (
     <div className="app-container min-h-screen bg-slate-800 dark:bg-slate-800 text-white">
       <div className="welcome-screen flex flex-col min-h-screen">
@@ -19,11 +59,32 @@ export default function HomePage() {
             <br />
             hospital data and AI-driven insights.
           </p>
-          <Link href="/patient-form">
-            <Button className="w-full py-4 text-lg font-semibold rounded-full bg-blue-600 hover:bg-blue-700">
-              Login
-            </Button>
-          </Link>
+
+          {/* Login Button */}
+          <Button
+            className="w-full py-4 text-lg font-semibold rounded-full bg-blue-600 hover:bg-blue-700 mb-4"
+            onClick={handleLogin}
+          >
+            Login
+          </Button>
+
+          {/* Email/password inputs */}
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full mb-2 p-3 rounded text-black"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full mb-2 p-3 rounded text-black"
+          />
+          {error && <p className="text-red-400 text-sm mb-2">{error}</p>}
+
           <p className="text-xs text-gray-400 text-center mt-5 px-5 leading-relaxed">
             By continuing, you agree to our{" "}
             <Link href="/terms" className="text-blue-400 hover:underline">

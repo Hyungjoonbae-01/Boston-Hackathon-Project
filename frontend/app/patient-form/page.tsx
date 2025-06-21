@@ -1,17 +1,24 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft } from "lucide-react"
 
 export default function PatientFormPage() {
   const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [formData, setFormData] = useState({
     patientName: "",
     notApplicable: true,
@@ -25,10 +32,47 @@ export default function PatientFormPage() {
 
   const [errors, setErrors] = useState<string[]>([])
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/me", { credentials: "include" });
+        if (res.ok) {
+          setIsAuthenticated(true);
+        } else {
+          router.replace("/");
+        }
+      } catch (error) {
+        console.error("Authentication check failed:", error);
+        router.replace("/");
+      }
+    };
+    checkAuth();
+  }, [router]);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:3000/api/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      router.push("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      alert("Logout failed. Please try again.");
+    }
+  };
+
   const handleSubmit = async () => {
-    const { ageRange, gender, heartRate, bloodPressure, oxygenSaturation, symptoms } = formData
+    const {
+      ageRange,
+      gender,
+      heartRate,
+      bloodPressure,
+      oxygenSaturation,
+      symptoms,
+    } = formData
     const newErrors: string[] = []
-  
+
     // Validate each required field
     if (!ageRange) newErrors.push("Age range is required")
     if (!gender) newErrors.push("Gender is required")
@@ -36,47 +80,52 @@ export default function PatientFormPage() {
     if (!bloodPressure) newErrors.push("Blood pressure is required")
     if (!oxygenSaturation) newErrors.push("Oxygen saturation is required")
     if (!symptoms.trim()) newErrors.push("Patient symptoms are required")
-  
+
     if (newErrors.length > 0) {
       setErrors(newErrors)
       alert("Please fill in all required fields:\n" + newErrors.join("\n"))
       return
     }
-  
+
     // Clear errors and proceed
     setErrors([])
-  
+
     const patientDataToStore = {
       ...formData,
-      patientName: formData.notApplicable ? "Not applicable" : formData.patientName,
+      patientName: formData.notApplicable
+        ? "Not applicable"
+        : formData.patientName,
     }
-  
-    // ✅ Save to local/session storage
-    localStorage.setItem("patientData", JSON.stringify(patientDataToStore))
-    sessionStorage.setItem("patientData", JSON.stringify(patientDataToStore))
-  
-    console.log("Form data saved:", patientDataToStore)
-  
-    // ✅ Send to backend API (SQLite database)
+
     try {
       const res = await fetch("http://localhost:3000/api/patient", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(patientDataToStore),
       })
-  
-      if (!res.ok) throw new Error("Failed to save to database")
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.message || "Failed to save to database")
+      }
       console.log("✅ Saved to DB")
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Error saving to database:", error)
-      alert("Something went wrong while saving to the database.")
+      alert(`Something went wrong: ${error.message}`)
       return
     }
-  
-    // ✅ Navigate to next page
+
     router.push("/account-setup")
   }
-  
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -88,7 +137,9 @@ export default function PatientFormPage() {
             </Button>
           </Link>
           <h1 className="text-xl font-bold text-gray-900">Patient Detail</h1>
-          <div></div>
+          <Button onClick={handleLogout} variant="destructive" size="sm">
+            Logout
+          </Button>
         </div>
 
         <div className="bg-gray-50 p-5 rounded-2xl mb-20 border border-gray-200">
